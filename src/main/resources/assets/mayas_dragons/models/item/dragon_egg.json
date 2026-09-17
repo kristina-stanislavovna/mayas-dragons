@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "mayas_dragons:item/dragon_egg"
+  }
+}
