@@ -1,4 +1,5 @@
 package uz.kristina.mayasdragons;
+import uz.kristina.mayasdragons.block.ModBlocks;
 import uz.kristina.mayasdragons.item.ModItems;
 
 import net.fabricmc.api.ModInitializer;
@@ -22,8 +23,10 @@ public class MayaSDragons implements ModInitializer {
 		// This code runs as soon as Minecraft is in a mod-load-ready state.
 		// However, some things (like resources) may still be uninitialized.
 		// Proceed with mild caution.
+		ModBlocks.registerModBlocks();
 		ModItems.registerModItems();
 		LOGGER.info("Maya's Dragons loaded!>>>");
+
 	}
 
 	public static Identifier id(String path) {

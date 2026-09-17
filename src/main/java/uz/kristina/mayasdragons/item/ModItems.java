@@ -6,11 +6,13 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.EggItem;
 import net.minecraft.world.item.Item;
 
 import net.minecraft.core.Registry;
 import net.minecraft.world.item.ItemStack;
 import uz.kristina.mayasdragons.MayaSDragons;
+import uz.kristina.mayasdragons.block.ModBlocks;
 
 
 import java.util.function.Function;
@@ -31,8 +33,15 @@ public class ModItems {
 
     public static final Item DRAGON_SCALE =
             register(ModItemIds.DRAGON_SCALE, Item::new, new Item.Properties());
+
     public static final Item DRAGON_EGG =
-            register(ModItemIds.DRAGON_EGG, Item::new, new Item.Properties());
+            register(
+                    ModItemIds.DRAGON_EGG,
+                    properties -> new DragonEggItem(ModBlocks.DRAGON_EGG, properties),
+                    new Item.Properties()
+            );
+
+
     public static final CreativeModeTab DRAGONS_TAB = FabricCreativeModeTab.builder()
             .icon(() -> new ItemStack(DRAGON_SCALE))
             .title(Component.translatable("creativeTab.mayas_dragons"))
