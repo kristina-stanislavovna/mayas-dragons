@@ -1,6 +1,7 @@
 package uz.kristina.mayasdragons;
 import uz.kristina.mayasdragons.block.ModBlocks;
 import uz.kristina.mayasdragons.item.ModItems;
+import uz.kristina.mayasdragons.block.entity.ModBlockEntities;
 
 import net.fabricmc.api.ModInitializer;
 
@@ -24,6 +25,7 @@ public class MayaSDragons implements ModInitializer {
 		// However, some things (like resources) may still be uninitialized.
 		// Proceed with mild caution.
 		ModBlocks.registerModBlocks();
+		ModBlockEntities.registerModBlockEntities();
 		ModItems.registerModItems();
 		LOGGER.info("Maya's Dragons loaded!>>>");
 
