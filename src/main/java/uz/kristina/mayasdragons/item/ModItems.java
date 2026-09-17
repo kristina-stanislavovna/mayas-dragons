@@ -31,12 +31,14 @@ public class ModItems {
 
     public static final Item DRAGON_SCALE =
             register(ModItemIds.DRAGON_SCALE, Item::new, new Item.Properties());
-
+    public static final Item DRAGON_EGG =
+            register(ModItemIds.DRAGON_EGG, Item::new, new Item.Properties());
     public static final CreativeModeTab DRAGONS_TAB = FabricCreativeModeTab.builder()
             .icon(() -> new ItemStack(DRAGON_SCALE))
             .title(Component.translatable("creativeTab.mayas_dragons"))
             .displayItems(((parameters, output) -> {
                 output.accept(DRAGON_SCALE);
+                output.accept(DRAGON_EGG);
             })).build();
 
 
