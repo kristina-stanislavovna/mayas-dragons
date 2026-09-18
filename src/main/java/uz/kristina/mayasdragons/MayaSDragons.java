@@ -1,5 +1,6 @@
 package uz.kristina.mayasdragons;
 import uz.kristina.mayasdragons.block.ModBlocks;
+import uz.kristina.mayasdragons.entity.ModEntityTypes;
 import uz.kristina.mayasdragons.item.ModItems;
 import uz.kristina.mayasdragons.block.entity.ModBlockEntities;
 
@@ -27,6 +28,9 @@ public class MayaSDragons implements ModInitializer {
 		ModBlocks.registerModBlocks();
 		ModBlockEntities.registerModBlockEntities();
 		ModItems.registerModItems();
+		ModEntityTypes.registerModEntityTypes();
+		ModEntityTypes.registerAttributes();
+
 		LOGGER.info("Maya's Dragons loaded!>>>");
 
 	}
