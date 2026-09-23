@@ -19,11 +19,21 @@ public class DragonEntityModel extends EntityModel<DragonEntityRenderState> {
     private final ModelPart tailTip;
     private final ModelPart neck;
     private final ModelPart head;
+    private final ModelPart frontLeftLeg;
+    private final ModelPart frontRightLeg;
+    private final ModelPart backLeftLeg;
+    private final ModelPart backRightLeg;
+    private final ModelPart body;
 
     public DragonEntityModel(ModelPart root) {
         super(root);
 
-        ModelPart body = root.getChild("body");
+        this.body = root.getChild("body");
+        ModelPart body = this.body;
+        this.frontLeftLeg = body.getChild("front_left_leg");
+        this.frontRightLeg = body.getChild("front_right_leg");
+        this.backLeftLeg = body.getChild("back_left_leg");
+        this.backRightLeg = body.getChild("back_right_leg");
         this.neck = body.getChild("neck");
         this.head = this.neck.getChild("head");
         this.leftWing = body.getChild("left_wing");
@@ -50,6 +60,22 @@ public class DragonEntityModel extends EntityModel<DragonEntityRenderState> {
         this.neck.xRot = breathe * 0.015F;
         this.head.xRot = breathe * 0.025F;
         this.head.yRot = (float) Math.sin(state.ageInTicks * 0.035F) * 0.02F;
+        float walk = state.walkAnimationPos * 0.6662F;
+        float walkAmount = Math.min(state.walkAnimationSpeed, 1.0F) * 0.6F;
+        float diagonalA = (float) Math.cos(walk) * walkAmount;
+        float diagonalB = (float) Math.cos(walk + Math.PI) * walkAmount;
+        this.frontLeftLeg.xRot = diagonalA;
+        this.backRightLeg.xRot = diagonalA;
+        this.frontRightLeg.xRot = diagonalB;
+        this.backLeftLeg.xRot = diagonalB;
+        float bodyBob =
+                Math.abs((float) Math.sin(walk)) * walkAmount * 0.35F;
+
+        this.body.y += bodyBob;
+        float headCompensation = (float) Math.sin(walk) * walkAmount;
+
+        this.neck.xRot += headCompensation * 0.02F;
+        this.head.xRot -= headCompensation * 0.03F;
 
     }
 
