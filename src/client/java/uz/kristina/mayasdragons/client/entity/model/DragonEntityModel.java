@@ -14,24 +14,43 @@ public class DragonEntityModel extends EntityModel<DragonEntityRenderState> {
 
     private final ModelPart leftWing;
     private final ModelPart rightWing;
+    private final ModelPart tail;
+    private final ModelPart tailMiddle;
+    private final ModelPart tailTip;
+    private final ModelPart neck;
+    private final ModelPart head;
 
     public DragonEntityModel(ModelPart root) {
         super(root);
 
         ModelPart body = root.getChild("body");
-
+        this.neck = body.getChild("neck");
+        this.head = this.neck.getChild("head");
         this.leftWing = body.getChild("left_wing");
         this.rightWing = body.getChild("right_wing");
+        this.tail = body.getChild("tail");
+        this.tailMiddle = this.tail.getChild("tail_middle");
+        this.tailTip = this.tailMiddle.getChild("tail_tip");
+
+
     }
+
 
     @Override
     public void setupAnim(DragonEntityRenderState state) {
         super.setupAnim(state);
-
         float flap = (float) Math.sin(state.ageInTicks * 0.12F) * 0.08F;
-
         this.leftWing.zRot = flap;
         this.rightWing.zRot = -flap;
+        float tailSwing = (float) Math.sin(state.ageInTicks * 0.08F);
+        this.tail.yRot = tailSwing * 0.04F;
+        this.tailMiddle.yRot = tailSwing * 0.07F;
+        this.tailTip.yRot = tailSwing * 0.10F;
+        float breathe = (float) Math.sin(state.ageInTicks * 0.05F);
+        this.neck.xRot = breathe * 0.015F;
+        this.head.xRot = breathe * 0.025F;
+        this.head.yRot = (float) Math.sin(state.ageInTicks * 0.035F) * 0.02F;
+
     }
 
     public static LayerDefinition createBodyLayer() {
@@ -104,5 +123,6 @@ public class DragonEntityModel extends EntityModel<DragonEntityRenderState> {
 
         return LayerDefinition.create(meshdefinition, 128, 128);
     }
+
 
 }
