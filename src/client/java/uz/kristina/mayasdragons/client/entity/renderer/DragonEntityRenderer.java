@@ -40,6 +40,7 @@ public class DragonEntityRenderer extends MobRenderer<
         super.extractRenderState(entity, state, tickProgress);
 
         state.growthStage = entity.getGrowthStage();
+        state.flying = entity.isFlying();
     }
 
 
