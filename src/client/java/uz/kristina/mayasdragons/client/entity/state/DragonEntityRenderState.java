@@ -6,4 +6,5 @@ import uz.kristina.mayasdragons.entity.DragonGrowthStage;
 public class DragonEntityRenderState extends LivingEntityRenderState {
 
     public DragonGrowthStage growthStage;
+    public boolean flying;
 }

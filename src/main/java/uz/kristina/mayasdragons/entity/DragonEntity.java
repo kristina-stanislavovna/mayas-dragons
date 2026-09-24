@@ -18,6 +18,10 @@ import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.world.entity.ai.control.FlyingMoveControl;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.block.state.BlockState;
 
 public class DragonEntity extends TamableAnimal {
     private int growthTicks = 0;
@@ -32,19 +36,27 @@ public class DragonEntity extends TamableAnimal {
 
     public DragonEntity(EntityType<? extends DragonEntity> type, Level level) {
         super(type, level);
+
+        this.moveControl = new FlyingMoveControl(
+                this,
+                20,
+                true
+        );
     }
 
     @Override
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
         super.defineSynchedData(builder);
-
         builder.define(DATA_GROWTH_TICKS, 0);
+        builder.define(DATA_FLYING, false);
     }
 
     public static AttributeSupplier.Builder createDragonAttributes() {
         return TamableAnimal.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, 20.0)
-                .add(Attributes.MOVEMENT_SPEED, 0.25);
+                .add(Attributes.MOVEMENT_SPEED, 0.25)
+                .add(Attributes.FLYING_SPEED, 0.4);
+
     }
 
     @Override
@@ -96,12 +108,87 @@ public class DragonEntity extends TamableAnimal {
         super.tick();
 
         if (!this.level().isClientSide()) {
+
+            // Страховка после перезапуска мира
+            if (!this.isFlying()) {
+                this.setNoGravity(false);
+            }
+
             growthTicks++;
 
             this.entityData.set(
                     DATA_GROWTH_TICKS,
                     growthTicks
             );
+
+            // -------------------------
+            // TEST: запуск полёта
+            // -------------------------
+
+            if (!this.isFlying() && this.onGround()) {
+
+                flightCooldown--;
+
+                if (flightCooldown <= 0) {
+                    this.startFlying();
+                    flightCooldown = 200;
+                }
+            }
+
+            // -------------------------
+            // Полёт
+            // -------------------------
+
+            if (this.isFlying()) {
+
+                // Наземная навигация сейчас не вмешивается
+                this.getNavigation().stop();
+
+                this.setXxa(0.0F);
+                this.setZza(0.0F);
+
+                if (this.flightTicks > 0) {
+
+                    this.flightTicks--;
+
+                    // ВАЖНО:
+                    // цель фиксированная, выбранная в startFlying()
+                    this.getMoveControl().setWantedPosition(
+                            this.flightTargetX,
+                            this.flightTargetY,
+                            this.flightTargetZ,
+                            1.0D
+                    );
+
+                    // Полёт закончился -> возвращаем гравитацию
+                    if (this.flightTicks == 0) {
+                        this.landingTicks = 40; // примерно 2 секунды на снижение
+                    }
+
+                }
+                else if (this.landingTicks > 0) {
+
+                    this.landingTicks--;
+
+                    this.setNoGravity(true);
+
+                    this.setDeltaMovement(
+                            this.getDeltaMovement().x * 0.8D,
+                            -0.08D,
+                            this.getDeltaMovement().z * 0.8D
+                    );
+
+                    if (this.onGround()) {
+                        this.landingTicks = 0;
+                        this.setNoGravity(false);
+                        this.setFlying(false);
+                    }
+                }
+                else if (this.onGround()) {
+                    this.setNoGravity(false);
+                    this.setFlying(false);
+                }
+            }
         }
     }
 
@@ -123,4 +210,89 @@ public class DragonEntity extends TamableAnimal {
     public int getGrowthTicks() {
         return this.entityData.get(DATA_GROWTH_TICKS);
     }
+    private static final EntityDataAccessor<Boolean> DATA_FLYING =
+            SynchedEntityData.defineId(
+                    DragonEntity.class,
+                    EntityDataSerializers.BOOLEAN
+            );
+
+
+    private int flightTicks = 0;
+    private int flightCooldown = 100;
+    private int landingTicks = 0;
+    private double flightTargetX;
+    private double flightTargetY;
+    private double flightTargetZ;
+    private static final int TEST_FLIGHT_TIME = 20 * 3;
+
+
+    public boolean isFlying() {
+        return this.entityData.get(DATA_FLYING);
+    }
+
+    public void setFlying(boolean flying) {
+        this.entityData.set(DATA_FLYING, flying);
+    }
+
+    public void startFlying() {
+
+        this.setFlying(true);
+        this.setNoGravity(true);
+
+        this.flightTicks = TEST_FLIGHT_TIME;
+
+        double angle = Math.toRadians(this.getYRot());
+
+        this.flightTargetX =
+                this.getX() - Math.sin(angle) * 8.0D;
+
+        this.flightTargetZ =
+                this.getZ() + Math.cos(angle) * 8.0D;
+
+        this.flightTargetY =
+                this.getY() + 2.0D;
+
+        // Небольшой первоначальный толчок вверх
+        this.setDeltaMovement(
+                this.getDeltaMovement().x,
+                0.15D,
+                this.getDeltaMovement().z
+        );
+    }
+    @Override
+    public boolean causeFallDamage(
+            double fallDistance,
+            float damageMultiplier,
+            DamageSource damageSource
+    ) {
+        if (this.isFlying()) {
+            return false;
+        }
+
+        return super.causeFallDamage(
+                fallDistance,
+                damageMultiplier,
+                damageSource
+        );
+    }
+    @Override
+    protected void checkFallDamage(
+            double heightDifference,
+            boolean onGround,
+            BlockState state,
+            BlockPos landedPosition
+    ) {
+        if (this.isFlying() || this.landingTicks > 0) {
+            this.fallDistance = 0.0F;
+            return;
+        }
+
+        super.checkFallDamage(
+                heightDifference,
+                onGround,
+                state,
+                landedPosition
+        );
+    }
+
 }

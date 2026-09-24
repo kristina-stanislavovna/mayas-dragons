@@ -49,9 +49,23 @@ public class DragonEntityModel extends EntityModel<DragonEntityRenderState> {
     @Override
     public void setupAnim(DragonEntityRenderState state) {
         super.setupAnim(state);
-        float flap = (float) Math.sin(state.ageInTicks * 0.12F) * 0.08F;
-        this.leftWing.zRot = flap;
-        this.rightWing.zRot = -flap;
+        if (state.flying) {
+
+            float flightFlap =
+                    (float) Math.sin(state.ageInTicks * 0.45F) * 0.55F;
+
+            this.leftWing.zRot = flightFlap;
+            this.rightWing.zRot = -flightFlap;
+
+        } else {
+
+            float idleFlap =
+                    (float) Math.sin(state.ageInTicks * 0.12F) * 0.08F;
+
+            this.leftWing.zRot = idleFlap;
+            this.rightWing.zRot = -idleFlap;
+        }
+
         float tailSwing = (float) Math.sin(state.ageInTicks * 0.08F);
         this.tail.yRot = tailSwing * 0.04F;
         this.tailMiddle.yRot = tailSwing * 0.07F;
