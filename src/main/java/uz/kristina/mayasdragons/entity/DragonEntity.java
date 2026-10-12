@@ -22,6 +22,8 @@ import net.minecraft.world.entity.ai.control.FlyingMoveControl;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.state.BlockState;
+import uz.kristina.mayasdragons.entity.ai.goal.DragonRandomFlyGoal;
+
 
 public class DragonEntity extends TamableAnimal {
     private int growthTicks = 0;
@@ -74,6 +76,10 @@ public class DragonEntity extends TamableAnimal {
     protected void registerGoals() {
         this.goalSelector.addGoal(
                 1,
+                new DragonRandomFlyGoal(this)
+        );
+        this.goalSelector.addGoal(
+                1,
                 new RandomStrollGoal(this, 0.8)
         );
 
@@ -90,17 +96,17 @@ public class DragonEntity extends TamableAnimal {
 
     public DragonGrowthStage getGrowthStage() {
 
-            int age = getGrowthTicks();
+        int age = getGrowthTicks();
 
-            if (age < JUVENILE_TIME) {
-                return DragonGrowthStage.HATCHLING;
-            }
+        if (age < JUVENILE_TIME) {
+            return DragonGrowthStage.HATCHLING;
+        }
 
-            if (age < ADULT_TIME) {
-                return DragonGrowthStage.JUVENILE;
-            }
+        if (age < ADULT_TIME) {
+            return DragonGrowthStage.JUVENILE;
+        }
 
-            return DragonGrowthStage.ADULT;
+        return DragonGrowthStage.ADULT;
     }
 
     @Override
@@ -124,16 +130,16 @@ public class DragonEntity extends TamableAnimal {
             // -------------------------
             // TEST: запуск полёта
             // -------------------------
-
-            if (!this.isFlying() && this.onGround()) {
-
-                flightCooldown--;
-
-                if (flightCooldown <= 0) {
-                    this.startFlying();
-                    flightCooldown = 200;
-                }
-            }
+//
+//            if (!this.isFlying() && this.onGround()) {
+//
+//                flightCooldown--;
+//
+//                if (flightCooldown <= 0) {
+//                    this.startFlying();
+//                    flightCooldown = 200;
+//                }
+//            }
 
             // -------------------------
             // Полёт
@@ -149,24 +155,58 @@ public class DragonEntity extends TamableAnimal {
 
                 if (this.flightTicks > 0) {
 
+//                    this.flightTicks--;
+//
+//                    // ВАЖНО:
+//                    // цель фиксированная, выбранная в startFlying()
+//                    this.getMoveControl().setWantedPosition(
+//                            this.flightTargetX,
+//                            this.flightTargetY,
+//                            this.flightTargetZ,
+//                            1.0D
+//                     );
                     this.flightTicks--;
 
-                    // ВАЖНО:
-                    // цель фиксированная, выбранная в startFlying()
-                    this.getMoveControl().setWantedPosition(
-                            this.flightTargetX,
-                            this.flightTargetY,
-                            this.flightTargetZ,
-                            1.0D
-                    );
+// Первую секунду набираем высоту почти вертикально
+                    if (this.flightTicks >= TEST_FLIGHT_TIME - TAKEOFF_TIME) {
+
+                        this.getMoveControl().setWantedPosition(
+                                this.getX(),
+                                this.flightHeight,
+                                this.getZ(),
+                                0.8D
+                        );
+
+                    } else {
+
+                        // Высоту набрали — летим вперёд почти горизонтально
+                        this.getMoveControl().setWantedPosition(
+                                this.flightTargetX,
+                                this.flightHeight,
+                                this.flightTargetZ,
+                                1.0D
+                        );
+                        double heightError = this.flightHeight - this.getY();
+
+                        double verticalCorrection = Math.max(
+                                -0.04D,
+                                Math.min(0.04D, heightError * 0.08D)
+                        );
+
+                        this.setDeltaMovement(
+                                this.getDeltaMovement().x,
+                                verticalCorrection,
+                                this.getDeltaMovement().z
+                        );
+                    }
+
 
                     // Полёт закончился -> возвращаем гравитацию
                     if (this.flightTicks == 0) {
                         this.landingTicks = 40; // примерно 2 секунды на снижение
                     }
 
-                }
-                else if (this.landingTicks > 0) {
+                } else if (this.landingTicks > 0) {
 
                     this.landingTicks--;
 
@@ -183,8 +223,7 @@ public class DragonEntity extends TamableAnimal {
                         this.setNoGravity(false);
                         this.setFlying(false);
                     }
-                }
-                else if (this.onGround()) {
+                } else if (this.onGround()) {
                     this.setNoGravity(false);
                     this.setFlying(false);
                 }
@@ -210,6 +249,7 @@ public class DragonEntity extends TamableAnimal {
     public int getGrowthTicks() {
         return this.entityData.get(DATA_GROWTH_TICKS);
     }
+
     private static final EntityDataAccessor<Boolean> DATA_FLYING =
             SynchedEntityData.defineId(
                     DragonEntity.class,
@@ -218,12 +258,14 @@ public class DragonEntity extends TamableAnimal {
 
 
     private int flightTicks = 0;
+    private double flightHeight;
     private int flightCooldown = 100;
     private int landingTicks = 0;
     private double flightTargetX;
     private double flightTargetY;
     private double flightTargetZ;
-    private static final int TEST_FLIGHT_TIME = 20 * 3;
+    private static final int TEST_FLIGHT_TIME = 20 * 5;
+    private static final int TAKEOFF_TIME = 20; // 1 секунда
 
 
     public boolean isFlying() {
@@ -240,17 +282,18 @@ public class DragonEntity extends TamableAnimal {
         this.setNoGravity(true);
 
         this.flightTicks = TEST_FLIGHT_TIME;
+        this.flightHeight = this.getY() + 4.0D;
 
         double angle = Math.toRadians(this.getYRot());
 
         this.flightTargetX =
-                this.getX() - Math.sin(angle) * 8.0D;
+                this.getX() - Math.sin(angle) * 14.0D;
 
         this.flightTargetZ =
-                this.getZ() + Math.cos(angle) * 8.0D;
+                this.getZ() + Math.cos(angle) * 14.0D;
 
         this.flightTargetY =
-                this.getY() + 2.0D;
+                this.getY() + 4.0D;
 
         // Небольшой первоначальный толчок вверх
         this.setDeltaMovement(
@@ -259,6 +302,7 @@ public class DragonEntity extends TamableAnimal {
                 this.getDeltaMovement().z
         );
     }
+
     @Override
     public boolean causeFallDamage(
             double fallDistance,
@@ -275,6 +319,7 @@ public class DragonEntity extends TamableAnimal {
                 damageSource
         );
     }
+
     @Override
     protected void checkFallDamage(
             double heightDifference,
