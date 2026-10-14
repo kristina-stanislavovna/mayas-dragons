@@ -201,7 +201,7 @@ public class DragonEntity extends TamableAnimal {
                     }
 
 
-                    // Полёт закончился -> возвращаем гравитацию
+                    // Полпшёт закончился -> возвращаем гравитацию
                     if (this.flightTicks == 0) {
                         this.landingTicks = 40; // примерно 2 секунды на снижение
                     }
