@@ -3,6 +3,7 @@ package uz.kristina.mayasdragons.entity.ai.goal;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
 import uz.kristina.mayasdragons.entity.DragonEntity;
+import java.util.EnumSet;
 
 public class DragonFollowOwnerGoal extends Goal {
 
@@ -11,6 +12,10 @@ public class DragonFollowOwnerGoal extends Goal {
 
     public DragonFollowOwnerGoal(DragonEntity dragon) {
         this.dragon = dragon;
+
+        this.setFlags(
+                EnumSet.of(Goal.Flag.MOVE)
+        );
     }
 
     @Override
@@ -36,8 +41,45 @@ public class DragonFollowOwnerGoal extends Goal {
         return true;
 
     }
+
     @Override
     public void start() {
+        System.out.println("FOLLOW OWNER: START");
         dragon.startFlying();
+    }
+
+    @Override
+    public void tick() {
+
+        if (owner == null) {
+            return;
+        }
+        dragon.keepFlying();
+
+        if (dragon.tickCount % 20 == 0) {
+            System.out.println(
+                    "FOLLOW OWNER: distance = " +
+                            Math.sqrt(dragon.distanceToSqr(owner))
+            );
+        }
+
+        dragon.setFlightTarget(
+                owner.getX(),
+                owner.getY() + 3.0D,
+                owner.getZ()
+        );
+    }
+    @Override
+    public boolean canContinueToUse() {
+
+        if (owner == null) {
+            return false;
+        }
+
+        return dragon.distanceToSqr(owner) > 25.0D;
+    }
+    @Override
+    public void stop() {
+        System.out.println("FOLLOW OWNER: STOP");
     }
 }

@@ -22,7 +22,10 @@ import net.minecraft.world.entity.ai.control.FlyingMoveControl;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.state.BlockState;
-import uz.kristina.mayasdragons.entity.ai.goal.DragonRandomFlyGoal;
+import uz.kristina.mayasdragons.entity.ai.goal.DragonRandomFlyGoal;import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
+import uz.kristina.mayasdragons.entity.ai.goal.DragonFollowOwnerGoal;
 
 
 public class DragonEntity extends TamableAnimal {
@@ -76,6 +79,10 @@ public class DragonEntity extends TamableAnimal {
     protected void registerGoals() {
         this.goalSelector.addGoal(
                 1,
+                new DragonFollowOwnerGoal(this)
+        );
+        this.goalSelector.addGoal(
+                1,
                 new DragonRandomFlyGoal(this)
         );
         this.goalSelector.addGoal(
@@ -92,6 +99,7 @@ public class DragonEntity extends TamableAnimal {
                 3,
                 new RandomLookAroundGoal(this)
         );
+
     }
 
     public DragonGrowthStage getGrowthStage() {
@@ -275,7 +283,27 @@ public class DragonEntity extends TamableAnimal {
     public void setFlying(boolean flying) {
         this.entityData.set(DATA_FLYING, flying);
     }
+    public void keepFlying() {
 
+        if (!this.isFlying()) {
+            this.startFlying();
+        }
+
+        this.flightTicks = Math.max(
+                this.flightTicks,
+                20
+        );
+
+        this.landingTicks = 0;
+        this.setNoGravity(true);
+    }
+
+    public void setFlightTarget(double x, double y, double z) {
+        this.flightTargetX = x;
+        this.flightTargetY = y;
+        this.flightTargetZ = z;
+        this.flightHeight = y;
+    }
     public void startFlying() {
 
         this.setFlying(true);
@@ -338,6 +366,22 @@ public class DragonEntity extends TamableAnimal {
                 state,
                 landedPosition
         );
+    }
+
+    @Override
+    public InteractionResult mobInteract(Player player, InteractionHand hand) {
+
+        if (!this.isTame()) {
+
+            if (!this.level().isClientSide()) {
+                this.tame(player);
+                System.out.println("DRAGON TAMED: " + player.getName().getString());
+            }
+
+            return InteractionResult.SUCCESS;
+        }
+
+        return super.mobInteract(player, hand);
     }
 
 }
